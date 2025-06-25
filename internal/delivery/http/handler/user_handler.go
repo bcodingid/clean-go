@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"example/clean-arch/internal/delivery/http/middleware"
 	"example/clean-arch/internal/usecase"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +14,10 @@ type UserHadler struct {
 func NewUserHandler(g *gin.Engine, uc usecase.UserUsecase) {
 	h := &UserHadler{uc}
 
-	g.GET("/users", h.All)
+	protected := g.Group("/api/v1")
+	protected.Use(middleware.JWTMiddleware())
+
+	protected.GET("/users", h.All)
 }
 
 func (h *UserHadler) All(c *gin.Context) {

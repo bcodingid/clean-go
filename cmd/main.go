@@ -6,25 +6,30 @@ import (
 	"log"
 	"os"
 
+	"example/clean-arch/config"
 	"example/clean-arch/internal/infrastructure/pgsql"
 	"example/clean-arch/internal/usecase"
 	"example/clean-arch/routes"
 
 	"github.com/gin-gonic/gin"
-
-	_ "github.com/lib/pq"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Println("Error loading .env file")
+	}
 
 	// Initialize PostgreSQL database connection
-	db, err := pgsql.InitDB()
+	pgdb, err := pgsql.InitDB()
 	if err != nil {
 		panic(err)
 	}
 
-	pgUserRepo := pgsql.NewUserRepo(db)
-	authUsecase := usecase.NewAuthUsecase(pgUserRepo, os.Getenv("JWT_SECRET"))
+	pgUserRepo := pgsql.NewUserRepo(pgdb)
+	authUsecase := usecase.NewAuthUsecase(pgUserRepo, os.Getenv(config.JwtKey))
 	userUsecase := usecase.NewUserUsecase(pgUserRepo)
 
 	// Initialize Gin router

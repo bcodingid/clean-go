@@ -21,7 +21,7 @@ func NewAuthHandler(r *gin.Engine, uc usecase.AuthUsecase) {
 
 // Register handler
 func (h *AuthHandler) Register(c *gin.Context) {
-	params := entity.RegisterParams{}
+	var params entity.RegisterParams
 
 	if err := c.ShouldBindJSON(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})
@@ -40,7 +40,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 // Login Handler
 func (h *AuthHandler) Login(c *gin.Context) {
-	params := entity.LoginParams{}
+	var params entity.LoginParams
 
 	if err := c.ShouldBindJSON(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid input"})

@@ -4,14 +4,18 @@ import (
 	"errors"
 	"example/clean-arch/internal/entity"
 	"example/clean-arch/internal/repository"
+	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
+var validate = validator.New()
+
 // define the interfase of usecase
 type AuthUsecase interface {
-	Login(params entity.LoginParams) (string, error)
+	Login(entity.LoginParams) (string, error)
 	Register(entity.RegisterParams) error
 }
 
@@ -47,19 +51,30 @@ func (uc *authUsecase) Login(params entity.LoginParams) (string, error) {
 		"user_id":  user.ID,
 		"email":    user.Email,
 		"username": user.Username,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(), // token valid for 24 hours
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signed, _ := token.SignedString([]byte(uc.jwtSecret))
+	signed, err := token.SignedString([]byte(uc.jwtSecret))
+
+	if err != nil {
+		return "", errors.New("failed to sign token")
+	}
 
 	return signed, nil
 }
 
 // Register method to create a new user
 func (uc *authUsecase) Register(params entity.RegisterParams) error {
-	_, err := uc.repo.GetByEmail(params.Email)
 
+	err := validate.Struct(params)
 	if err != nil {
+		return errors.New("invalid input: " + err.Error())
+	}
+
+	find, _ := uc.repo.GetByEmail(params.Email)
+
+	if find != nil {
 		return errors.New("email already exists")
 	}
 
